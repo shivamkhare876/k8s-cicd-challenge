@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K8s CloudStack Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="background-glow"></div>
+  
+  <div class="app-container">
+    <!-- Header Navbar -->
+    <header class="navbar">
+      <div class="logo-group">
+        <div class="k8s-logo">☸</div>
+        <div>
+          <h1>DevOps CloudStack Console</h1>
+          <p class="subtitle">Kubernetes Production Stack Control Center</p>
+        </div>
+      </div>
+      <div class="environment-badge">
+        <span class="pulse-dot"></span>
+        <span id="env-tag">PRODUCTION</span>
+      </div>
+    </header>
+
+    <!-- System Metrics Overview Bar -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="card-icon">⚡</div>
+        <div class="card-content">
+          <span class="card-label">Pod Identifier</span>
+          <span class="card-value mono" id="pod-name">Connecting...</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="card-icon">🏥</div>
+        <div class="card-content">
+          <span class="card-label">Liveness Probe (/healthz)</span>
+          <span class="badge badge-success" id="liveness-status">ALIVE</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="card-icon">🗄️</div>
+        <div class="card-content">
+          <span class="card-label">Readiness Probe (/readyz)</span>
+          <span class="badge badge-success" id="readiness-status">CONNECTED</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="card-icon">⏱️</div>
+        <div class="card-content">
+          <span class="card-label">System Uptime</span>
+          <span class="card-value" id="uptime-value">0s</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Workspace Split Grid -->
+    <main class="workspace-grid">
+      
+      <!-- Panel 1: Redis Key-Value Store Console -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2>💾 Stateful Data Manager (Redis Dependency)</h2>
+          <span class="tag">Tier 3 Data Store</span>
+        </div>
+
+        <form id="kv-form" class="kv-form">
+          <div class="form-group">
+            <label for="key-input">Cache Key</label>
+            <input type="text" id="key-input" placeholder="e.g. session:user:101" required>
+          </div>
+
+          <div class="form-group">
+            <label for="value-input">JSON Payload / Value</label>
+            <textarea id="value-input" rows="3" placeholder='{"user": "Alex", "role": "Senior SRE", "region": "us-east-1"}' required></textarea>
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn btn-primary" id="btn-save">
+              <span>➕ Save Record</span>
+            </button>
+            <button type="button" class="btn btn-secondary" id="btn-fetch">
+              <span>🔍 Fetch Record</span>
+            </button>
+          </div>
+        </form>
+
+        <div class="result-box" id="result-box">
+          <div class="result-header">
+            <span>Query Output</span>
+            <span class="mono" id="query-timestamp">--:--:--</span>
+          </div>
+          <pre><code id="json-output">// Execute a query or save a record to see Redis output...</code></pre>
+        </div>
+      </div>
+
+      <!-- Panel 2: Live Cluster Telemetry & SRE Chaos Testing -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2>🧪 Chaos Engineering & Telemetry</h2>
+          <span class="tag tag-warning">Incident Simulator</span>
+        </div>
+
+        <p class="panel-desc">
+          Test dependency-aware readiness probes by triggering simulated database network isolation or credentials failure.
+        </p>
+
+        <div class="chaos-controls">
+          <button type="button" class="btn btn-danger" id="btn-simulate-fail">
+            <span>💥 Inject DB Host Failure</span>
+          </button>
+          <button type="button" class="btn btn-success" id="btn-restore">
+            <span>🛠️ Restore DB Connection</span>
+          </button>
+        </div>
+
+        <div class="console-box">
+          <div class="console-header">
+            <span>Live Audit Console</span>
+            <span class="clear-btn" id="btn-clear-logs">Clear</span>
+          </div>
+          <div class="console-logs" id="console-logs">
+            <div class="log-entry log-info">[SYSTEM INITIALIZED] Web Control Center ready. Monitoring /healthz & /readyz probes...</div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>DevOps Kubernetes & CI/CD Infrastructure Challenge Stack &bull; Microservices 3-Tier Architecture</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+replicaCount: 2
+
+image:
+  repository: devops-backend
+  pullPolicy: IfNotPresent
+  tag: "1.0.0"
+
+service:
+  type: NodePort
+  port: process.env.PORT || 8080
+  nodePort: process.env.PORT || 30080
+
+config:
+  nodeEnv: production
+  dbHost: redis-service
+  dbPort: 6379
+  logLevel: info
+
+secrets:
+  dbPassword: "ProductionSecurePassword123!"
+
+probes:
+  liveness:
+    path: /healthz
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  readiness:
+    path: /readyz
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+redis:
+  image: redis:7-alpine
+  port: 6379

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: devops-challenge
+  labels:
+    app: devops-backend
+data:
+  NODE_ENV: "production"
+  PORT: "8080"
+  DB_HOST: "redis-service"
+  DB_PORT: "6379"
+  LOG_LEVEL: "info"

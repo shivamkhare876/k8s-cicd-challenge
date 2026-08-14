@@ -1,0 +1,6 @@
+apiVersion: v2
+name: k8s-devops-stack
+description: Production Helm Chart for Microservice Stack with Redis Dependency & Probes
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
