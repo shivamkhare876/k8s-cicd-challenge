@@ -1,121 +1,32 @@
-name: Production CI/CD Pipeline
+.name: EC2 SSH Connection Test
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/backend
-  KUBECONFIG_SECRET: ${{ secrets.KUBECONFIG }}
+    branches: [ main ]
 
 jobs:
-  # ==========================================
-  # STAGE 1: Code Quality & Unit Testing
-  # ==========================================
-  test-and-lint:
-    name: 🧪 Code Quality & Unit Tests
+  ssh-test:
+    name: Test GitHub Actions to EC2 SSH
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js Environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: app/package-lock.json
-
-      - name: Install Dependencies
-        run: |
-          cd app
-          npm ci || npm install
-
-      - name: Execute Unit Test Suite
-        run: |
-          cd app
-          npm test
-
-      - name: Validate Kubernetes Manifests Syntax
-        uses: stefanprodan/kube-tools@v1
-        with:
-          command: |
-            kubectl apply --dry-run=client -f k8s/
-
-  # ==========================================
-  # STAGE 2: Security Scan & Container Build
-  # ==========================================
-  build-and-security-scan:
-    name: 🔒 Container Build & Vulnerability Scan
-    needs: test-and-lint
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Container Image (Dry-Run / Local Tag)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./app
-          file: ./app/Dockerfile
-          load: true
-          tags: devops-backend:${{ github.sha }}
-
-      - name: Security Vulnerability Scan (Trivy)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'devops-backend:${{ github.sha }}'
-          format: 'table'
-          exit-code: '0' # Set to 1 in strict environments to block build on HIGH/CRITICAL
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-
-  # ==========================================
-  # STAGE 3: Kubernetes Automated Deployment
-  # ==========================================
-  deploy-to-kubernetes:
-    name: 🚀 Kubernetes Deployment & Rollout Verification
-    needs: build-and-security-scan
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Kubeconfig Context
+      - name: Test SSH Connection
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          mkdir -p ~/.kube
-          if [ -n "$KUBECONFIG_SECRET" ]; then
-            echo "$KUBECONFIG_SECRET" > ~/.kube/config
-          else
-            echo "[INFO] Running in dry-run mode (No Kubeconfig provided)"
-          fi
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
 
-      - name: Apply Kubernetes Manifests
-        run: |
-          echo "[DEPLOY] Applying Namespace, Secrets, ConfigMaps, DB & Backend Service..."
-          kubectl apply -f k8s/ --dry-run=client
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/github_actions_key
+          chmod 600 ~/.ssh/github_actions_key
 
-      - name: Monitor Rollout & Automated Health Check
-        run: |
-          echo "[VERIFY] Checking Deployment Rollout Status..."
-          # kubectl rollout status deployment/devops-backend -n devops-challenge --timeout=90s
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
 
-      - name: Handle Deployment Failure (Auto Rollback)
-        if: failure()
-        run: |
-          echo "[CRITICAL ALERT] Deployment rollout failed! Executing automated rollback..."
-          # kubectl rollout undo deployment/devops-backend -n devops-challenge
-          # kubectl get pods -n devops-challenge -o wide
+          ssh \
+            -i ~/.ssh/github_actions_key \
+            -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes \
+            "$EC2_USER@$EC2_HOST" \
+            "echo 'SSH CONNECTION SUCCESSFUL'; hostname; whoami; docker --version; kubectl version --client"
