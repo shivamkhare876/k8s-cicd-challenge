@@ -1,4 +1,4 @@
-.name: EC2 SSH Connection Test
+name: test GitHub Actions EC2 SSH connectivity
 
 on:
   push:
