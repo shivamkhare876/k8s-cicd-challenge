@@ -1,32 +1,38 @@
-name: test GitHub Actions EC2 SSH connectivity
-
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  ssh-test:
-    name: Test GitHub Actions to EC2 SSH
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Test SSH Connection
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
+          set -e
+
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
           printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/github_actions_key
           chmod 600 ~/.ssh/github_actions_key
 
-          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+          echo "Checking SSH key format..."
+          ssh-keygen -y -f ~/.ssh/github_actions_key > /tmp/public_key
+
+          echo "SSH key format: OK"
+          echo "EC2 user: $EC2_USER"
+          echo "EC2 host configured: YES"
+
+          echo "Checking port 22..."
+          timeout 10 bash -c "</dev/tcp/$EC2_HOST/22" \
+            && echo "Port 22 is reachable" \
+            || { echo "ERROR: Port 22 is NOT reachable"; exit 1; }
+
+          echo "Adding host key..."
+          ssh-keyscan -T 10 -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+          echo "Testing SSH login..."
 
           ssh \
             -i ~/.ssh/github_actions_key \
             -o StrictHostKeyChecking=yes \
             -o BatchMode=yes \
+            -o ConnectTimeout=10 \
             "$EC2_USER@$EC2_HOST" \
             "echo 'SSH CONNECTION SUCCESSFUL'; hostname; whoami; docker --version; kubectl version --client"
